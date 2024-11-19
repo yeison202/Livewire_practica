@@ -5,21 +5,58 @@ namespace App\Livewire;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Tag;
+use Illuminate\Mail\Message;
+use Livewire\Attributes\Rule;
 use Livewire\Component;
 
 class Formulario extends Component
 {
 
     public $categories, $tags;
-    public $category_id = '', $title, $content;
 
-    public $selectedTags = [];
+    /*  public $category_id = '';
+   // #[Rule("required",message:"El campo titulo es necesario")]
+    public $title;
+    public $content;
+
+    public $tags = []; */
+
     public $posts;
+//validacion Global
+    #[Rule(
+        [
+            'postCreate.title' => 'required',
+            'postCreate.content' => 'required',
+            'postCreate.category_id' => 'required|exists:categories,id',
+            'postCreate.tags' => 'required|array'
+        ],
+
+
+        [
+            'postCreate.title' => 'Titulo',
+            'postCreate.content' => 'Contenido',
+            'postCreate.category_id' => 'Categorias',
+            'postCreate.tags' => 'Etiquetas',
+        ]
+    )]
+
+    public $postCreate = [
+        'category_id' => '',
+        'title' => '',
+        'content' => '',
+        'tags' => []
+    ];
+
+    public $postEdit = [
+        'category_id' => '',
+        'title' => '',
+        'content' => '',
+        'tags' => []
+    ];
+
+    public $postEditId = '';
+
     public $open = false;
-
-    public $postEdit=[];
-
-    public $postEditId="";
 
     public function mount()
     {
@@ -31,49 +68,73 @@ class Formulario extends Component
 
     public function save()
     {
-        /*$post = Post::create([
-            'category_id'=>$this->category_id,
-            'title'=>$this->title,
-            'content'=>$this->content
-        ]);*/
 
-        $post = Post::create(
-            $this->only('category_id', 'title', 'content')
+        $this->validate(
+
         );
-        $post->tags()->attach($this->selectedTags);
-        $this->reset(['category_id', 'title', 'content', 'selectedTags']);
+
+
+        $post = Post::create([
+            'category_id' => $this->postCreate['category_id'],
+            'title' => $this->postCreate['title'],
+            'content' => $this->postCreate['content']
+        ]);
+
+        $post->tags()->attach($this->postCreate['tags']);
+        $this->reset(['postCreate']);
         $this->posts = Post::all();
     }
 
-    public function edit($postId){
-        $this->open=true;
-        $this->postEditId=$postId;
 
-        $post= Post::find($postId);
+    public function edit($postId)
+    {
+        $this->resetValidation();
+        $this->open = true;
+        $this->postEditId = $postId;
 
-        $this->postEdit["category_id"]=$post->category_id;
-        $this->postEdit["title"]=$post->title;
-        $this->postEdit["content"]=$post->content;
-        $this->postEdit['selectedTags']=$post->tags->pluck('id')->toArray();
+        $post = Post::find($postId);
 
+        $this->postEdit["category_id"] = $post->category_id;
+        $this->postEdit["title"] = $post->title;
+        $this->postEdit["content"] = $post->content;
+        $this->postEdit['tags'] = $post->tags->pluck('id')->toArray();
     }
-    public function update(){
 
-        $post= Post::find($this->postEditId);
+
+    public function update()
+    {
+        //validacion personalizada
+        $this->validate(
+            [
+                'postEdit.title' => 'required ',
+                'postEdit.content' => 'required',
+                'postEdit.category_id' => 'required|exists:categories,id',
+                'postEdit.tags' => 'required|array'
+            ],
+
+            [
+                'postEdit.title.required' => 'El campo titulo es requerido ',
+            ],
+
+            ['postEdit.title' => 'Titulo',]
+        );
+
+        $post = Post::find($this->postEditId);
 
         $post->update([
-            'category_id'=>$this->postEdit["category_id"],
-             'title'=>$this->postEdit["title"],
-             'content'=>$this->postEdit["content"]
+            'category_id' => $this->postEdit["category_id"],
+            'title' => $this->postEdit["title"],
+            'content' => $this->postEdit["content"]
 
         ]);
-        $post->tags()->sync($this->postEdit["selectedTags"]);
-        $this->reset(["postEditId", "postEdit","open"]);
+        $post->tags()->sync($this->postEdit["tags"]);
+        $this->reset(["postEditId", "postEdit", "open"]);
         $this->posts = Post::all();
     }
 
-    public function destroy($postId){
-        $post=Post::find($postId);
+    public function destroy($postId)
+    {
+        $post = Post::find($postId);
         $post->delete();
         $this->posts = Post::all();
     }
