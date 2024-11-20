@@ -186,4 +186,14 @@
     </x-dialog-modal>
 </form>
 
+    @push('js')
+
+    <script>
+        Livewire.on("post-created",function(comment){
+            console.log(comment);
+        });
+    </script>
+
+    @endpush
+
 </div>

@@ -83,6 +83,8 @@ class Formulario extends Component
         $post->tags()->attach($this->postCreate['tags']);
         $this->reset(['postCreate']);
         $this->posts = Post::all();
+
+        $this->dispatch("post-created","Nuevo articulo creado");
     }
 
 
@@ -130,6 +132,7 @@ class Formulario extends Component
         $post->tags()->sync($this->postEdit["tags"]);
         $this->reset(["postEditId", "postEdit", "open"]);
         $this->posts = Post::all();
+        $this->dispatch("post-created","Articulo actualizado");
     }
 
     public function destroy($postId)
@@ -137,6 +140,7 @@ class Formulario extends Component
         $post = Post::find($postId);
         $post->delete();
         $this->posts = Post::all();
+        $this->dispatch("post-created","Articulo Eliminado");
     }
     public function render()
     {
